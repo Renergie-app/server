@@ -2,12 +2,86 @@
 
 package model
 
-type NewTodo struct {
-	Text string `json:"text"`
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type Facade struct {
+	Surface     *float64     `json:"surface"`
+	Angle       *int         `json:"angle"`
+	Orientation *Orientation `json:"orientation"`
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
+type FacadeResponse struct {
+	PowerOutputKwh      float64 `json:"powerOutputKWH"`
+	Cost                float64 `json:"cost"`
+	Profit              float64 `json:"profit"`
+	AmountOfSolarPanels int     `json:"amountOfSolarPanels"`
+}
+
+type SolarPanelInput struct {
+	PostalCode           string    `json:"postalCode"`
+	SellEverything       bool      `json:"sellEverything"`
+	IntegratedInBuilding bool      `json:"integratedInBuilding"`
+	Facades              []*Facade `json:"facades"`
+}
+
+type SolarPanelResponse struct {
+	TotalPowerOutputKwh      float64           `json:"totalPowerOutputKWH"`
+	TotalProfit              float64           `json:"totalProfit"`
+	TotalCost                float64           `json:"totalCost"`
+	TotalAmountOfSolarPanels int               `json:"totalAmountOfSolarPanels"`
+	StateFinancialHelp       float64           `json:"stateFinancialHelp"`
+	PerFacadeDetails         []*FacadeResponse `json:"perFacadeDetails"`
+}
+
+type Orientation string
+
+const (
+	OrientationSouth     Orientation = "South"
+	OrientationEast      Orientation = "East"
+	OrientationSouthEast Orientation = "SouthEast"
+	OrientationSouthWest Orientation = "SouthWest"
+	OrientationWest      Orientation = "WEST"
+	OrientationNone      Orientation = "NONE"
+)
+
+var AllOrientation = []Orientation{
+	OrientationSouth,
+	OrientationEast,
+	OrientationSouthEast,
+	OrientationSouthWest,
+	OrientationWest,
+	OrientationNone,
+}
+
+func (e Orientation) IsValid() bool {
+	switch e {
+	case OrientationSouth, OrientationEast, OrientationSouthEast, OrientationSouthWest, OrientationWest, OrientationNone:
+		return true
+	}
+	return false
+}
+
+func (e Orientation) String() string {
+	return string(e)
+}
+
+func (e *Orientation) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Orientation(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Orientation", str)
+	}
+	return nil
+}
+
+func (e Orientation) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

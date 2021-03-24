@@ -2,9 +2,6 @@
 #
 # https://gqlgen.com/getting-started/
 
-type Mutation {
-}
-
 input Facade {
     surface: Float,
     angle: Int,
@@ -12,22 +9,29 @@ input Facade {
 }
 
 type Query {
-    solarPanel(localisation: Int, sellEverything: Boolean, integratedInBuilding: Boolean, facades: [Facade]): SolarPanelResponse
+    solarPanel(input: SolarPanelInput): SolarPanelResponse
+}
+input SolarPanelInput {
+    postalCode: String!
+    sellEverything: Boolean!
+    integratedInBuilding: Boolean!
+    facades: [Facade!]!
 }
 
+
 type SolarPanelResponse {
-    totalPowerOutputKWH: Float
-    totalProfit: Float
-    totalCost: Float
-    totalAmountOfSolarPanels: Int
-    stateFinancialHelp: Float
-    perFacadeDetails: [FacadeResponse]
+    totalPowerOutputKWH: Float!
+    totalProfit: Float!
+    totalCost: Float!
+    totalAmountOfSolarPanels: Int!
+    stateFinancialHelp: Float!
+    perFacadeDetails: [FacadeResponse!]!
 }
 type FacadeResponse {
-    powerOutputKWH: Float
-    cost: Float
-    profit: Float
-    amountOfSolarPanels: Int
+    powerOutputKWH: Float!
+    cost: Float!
+    profit: Float!
+    amountOfSolarPanels: Int!
 }
 
 enum Orientation {
