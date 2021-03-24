@@ -2,20 +2,39 @@
 #
 # https://gqlgen.com/getting-started/
 
-type Todo {
-  id: ID!
-  text: String!
-  done: Boolean!
+type Mutation {
+}
+
+input Facade {
+    surface: Float,
+    angle: Int,
+    orientation: Orientation,
 }
 
 type Query {
-  todos: [Todo!]!
+    solarPanel(localisation: Int, sellEverything: Boolean, integratedInBuilding: Boolean, facades: [Facade]): SolarPanelResponse
 }
 
-input NewTodo {
-  text: String!
+type SolarPanelResponse {
+    totalPowerOutputKWH: Float
+    totalProfit: Float
+    totalCost: Float
+    totalAmountOfSolarPanels: Int
+    stateFinancialHelp: Float
+    perFacadeDetails: [FacadeResponse]
+}
+type FacadeResponse {
+    powerOutputKWH: Float
+    cost: Float
+    profit: Float
+    amountOfSolarPanels: Int
 }
 
-type Mutation {
-  createTodo(input: NewTodo!): Todo!
+enum Orientation {
+    South
+    East
+    SouthEast
+    SouthWest
+    WEST
+    NONE
 }
