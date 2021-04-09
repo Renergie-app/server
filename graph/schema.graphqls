@@ -18,7 +18,6 @@ input SolarPanelInput {
     facades: [Facade!]!
 }
 
-
 type SolarPanelResponse {
     totalPowerOutputKWH: Float!
     totalProfit: Float!
@@ -32,6 +31,8 @@ type FacadeResponse {
     cost: Float!
     profit: Float!
     amountOfSolarPanels: Int!
+    orientation: Orientation
+    angle: Int
 }
 
 enum Orientation {

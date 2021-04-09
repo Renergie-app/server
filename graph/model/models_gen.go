@@ -15,10 +15,12 @@ type Facade struct {
 }
 
 type FacadeResponse struct {
-	PowerOutputKwh      float64 `json:"powerOutputKWH"`
-	Cost                float64 `json:"cost"`
-	Profit              float64 `json:"profit"`
-	AmountOfSolarPanels int     `json:"amountOfSolarPanels"`
+	PowerOutputKwh      float64      `json:"powerOutputKWH"`
+	Cost                float64      `json:"cost"`
+	Profit              float64      `json:"profit"`
+	AmountOfSolarPanels int          `json:"amountOfSolarPanels"`
+	Orientation         *Orientation `json:"orientation"`
+	Angle               *int         `json:"angle"`
 }
 
 type SolarPanelInput struct {

@@ -43,7 +43,9 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	FacadeResponse struct {
 		AmountOfSolarPanels func(childComplexity int) int
+		Angle               func(childComplexity int) int
 		Cost                func(childComplexity int) int
+		Orientation         func(childComplexity int) int
 		PowerOutputKwh      func(childComplexity int) int
 		Profit              func(childComplexity int) int
 	}
@@ -88,12 +90,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.FacadeResponse.AmountOfSolarPanels(childComplexity), true
 
+	case "FacadeResponse.angle":
+		if e.complexity.FacadeResponse.Angle == nil {
+			break
+		}
+
+		return e.complexity.FacadeResponse.Angle(childComplexity), true
+
 	case "FacadeResponse.cost":
 		if e.complexity.FacadeResponse.Cost == nil {
 			break
 		}
 
 		return e.complexity.FacadeResponse.Cost(childComplexity), true
+
+	case "FacadeResponse.orientation":
+		if e.complexity.FacadeResponse.Orientation == nil {
+			break
+		}
+
+		return e.complexity.FacadeResponse.Orientation(childComplexity), true
 
 	case "FacadeResponse.powerOutputKWH":
 		if e.complexity.FacadeResponse.PowerOutputKwh == nil {
@@ -233,7 +249,6 @@ input SolarPanelInput {
     facades: [Facade!]!
 }
 
-
 type SolarPanelResponse {
     totalPowerOutputKWH: Float!
     totalProfit: Float!
@@ -247,6 +262,8 @@ type FacadeResponse {
     cost: Float!
     profit: Float!
     amountOfSolarPanels: Int!
+    orientation: Orientation
+    angle: Int
 }
 
 enum Orientation {
@@ -470,6 +487,70 @@ func (ec *executionContext) _FacadeResponse_amountOfSolarPanels(ctx context.Cont
 	res := resTmp.(int)
 	fc.Result = res
 	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _FacadeResponse_orientation(ctx context.Context, field graphql.CollectedField, obj *model.FacadeResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "FacadeResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Orientation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Orientation)
+	fc.Result = res
+	return ec.marshalOOrientation2ᚖrenergieᚑserverᚋgraphᚋmodelᚐOrientation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _FacadeResponse_angle(ctx context.Context, field graphql.CollectedField, obj *model.FacadeResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "FacadeResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Angle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_solarPanel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1998,6 +2079,10 @@ func (ec *executionContext) _FacadeResponse(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "orientation":
+			out.Values[i] = ec._FacadeResponse_orientation(ctx, field, obj)
+		case "angle":
+			out.Values[i] = ec._FacadeResponse_angle(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

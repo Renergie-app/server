@@ -5,13 +5,139 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"math"
 	"renergie-server/graph/generated"
 	"renergie-server/graph/model"
 )
 
+type FacadeCalc struct {
+	FacadeInput         *model.Facade
+	KWC                 float64
+	KWH                 float64
+	AmountOfSolarPanels int
+}
+
 func (r *queryResolver) SolarPanel(ctx context.Context, input *model.SolarPanelInput) (*model.SolarPanelResponse, error) {
-	panic(fmt.Errorf("not implemented"))
+	var facadesResult []*model.FacadeResponse
+	var facades []FacadeCalc
+
+	totalAmountOfSolarPanels := 0
+	totalKWH := 0.0
+	totalKWC := 0.0
+	stateFinancialHelp := 0.0
+	totalProfit := 0.0
+	totalCost := 0.0
+
+	for _, facade := range input.Facades {
+		amountOfSolarPanels := int(math.Floor(*facade.Surface / 1.7))
+		kwc := float64(amountOfSolarPanels) * 0.3
+		kwh := kwcToKwh(postalCodeToDepartment(input.PostalCode), kwc) * PercentageWithOrientationAndAngle(*facade.Orientation, *facade.Angle)
+		totalAmountOfSolarPanels += amountOfSolarPanels
+		totalKWH += kwh
+		totalKWC += kwc
+		facades = append(facades, FacadeCalc{
+			FacadeInput:         facade,
+			KWC:                 kwc,
+			KWH:                 kwh,
+			AmountOfSolarPanels: amountOfSolarPanels,
+		})
+	}
+
+	for _, facade := range facades {
+		profit := 0.0
+		cost := 0.0
+		//	PROFIT
+		if totalKWC <= 3 {
+			if input.SellEverything {
+				profit = 0.18 * facade.KWH
+			} else {
+				profit = 0.10 * facade.KWH
+			}
+		} else if totalKWC <= 9 {
+			if input.SellEverything {
+				profit = 0.15 * facade.KWH
+			} else {
+				profit = 0.10 * facade.KWH
+			}
+		} else if totalKWC <= 36 {
+			if input.SellEverything {
+				profit = 0.11 * facade.KWH
+			} else {
+				profit = 0.06 * facade.KWH
+			}
+		} else {
+			if input.SellEverything {
+				profit = 0.09 * facade.KWH
+			} else {
+				profit = 0.06 * facade.KWH
+			}
+		}
+		totalProfit += profit
+		//	COST
+		if totalKWC <= 3 {
+			if input.IntegratedInBuilding {
+				cost += 255 * facade.KWC
+			} else {
+				cost += 2850 * facade.KWC
+			}
+
+		} else if totalKWC <= 6 {
+			if input.IntegratedInBuilding {
+				cost += 2250 * facade.KWC
+			} else {
+				cost += 2500 * facade.KWC
+			}
+
+		} else if totalKWC <= 9 {
+			if input.IntegratedInBuilding {
+				cost += 2000 * facade.KWC
+			} else {
+				cost += 2200 * facade.KWC
+			}
+
+		} else {
+			if input.IntegratedInBuilding {
+				cost += 1950 * facade.KWC
+			} else {
+				cost += 2100 * facade.KWC
+			}
+
+		}
+		totalCost += cost
+
+		facadesResult = append(facadesResult, &model.FacadeResponse{
+			PowerOutputKwh:      facade.KWH,
+			Cost:                cost,
+			Profit:              profit,
+			AmountOfSolarPanels: facade.AmountOfSolarPanels,
+			Orientation:         facade.FacadeInput.Orientation,
+			Angle:               facade.FacadeInput.Angle,
+		})
+
+	}
+
+	if totalKWC <= 3 {
+		stateFinancialHelp += 380 * totalKWC
+	} else if totalKWC <= 9 {
+		stateFinancialHelp += 280 * totalKWC
+	} else if totalKWC <= 36 {
+		stateFinancialHelp += 160 * totalKWC
+	} else {
+		stateFinancialHelp += 80 * totalKWC
+	}
+
+	if totalCost > 0 {
+		totalCost += 2000
+	}
+
+	return &model.SolarPanelResponse{
+		TotalPowerOutputKwh:      totalKWH,
+		TotalProfit:              totalProfit,
+		TotalCost:                totalCost,
+		TotalAmountOfSolarPanels: totalAmountOfSolarPanels,
+		StateFinancialHelp:       stateFinancialHelp,
+		PerFacadeDetails:         facadesResult,
+	}, nil
 }
 
 // Query returns generated.QueryResolver implementation.
@@ -128,13 +254,12 @@ func kwcToKwh(department string, kwc float64) float64 {
 
 }
 func postalCodeToDepartment(postalCode string) string {
-	if len(postalCode) != 5 {
+	if len(postalCode) == 5 {
 		return postalCode[0:2]
 	} else {
 		return ""
 	}
 }
-
 func PercentageWithOrientationAndAngle(orientation model.Orientation, angle int) float64 {
 	switch orientation {
 	case model.OrientationSouth:
@@ -182,7 +307,6 @@ func PercentageWithOrientationAndAngle(orientation model.Orientation, angle int)
 
 	}
 }
-
 func getPercentage(alpha int, beta int, a int, b int, x int) float64 {
 	if x/30 >= 1 && x%30 == 0 {
 		return float64(a) + ((float64(30))*float64(b-a))/float64(beta-alpha)
