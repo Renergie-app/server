@@ -4,47 +4,60 @@ import (
 	"context"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/gorillamux"
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	"log"
+	"net/http"
+	"os"
 	"renergie-server/graph"
 	"renergie-server/graph/generated"
-
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/gorilla/mux"
+	"strings"
 )
 
-var muxAdapter *gorillamux.GorillaMuxAdapter
+var muxRouter *mux.Router
 
 func init() {
-	r := mux.NewRouter()
+	muxRouter = mux.NewRouter()
 
-	// From server.go
 	schema := generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}})
 	server := handler.NewDefaultServer(schema)
-	r.Handle("/query", server)
-	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	muxRouter.Handle("/query", server)
+	muxRouter.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	cors := handlers.CORS(
 		handlers.AllowedHeaders([]string{"content-type"}),
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowCredentials(),
 	)
-	r.Use(cors)
-	muxAdapter = gorillamux.New(r)
+	muxRouter.Use(cors)
 }
 
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func lambdaHandler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	muxAdapter := gorillamux.New(muxRouter)
+
 	rsp, err := muxAdapter.Proxy(req)
 	if err != nil {
 		log.Println(err)
 	}
-	//rsp.Headers["Access-Control-Allow-Origin"] = "*"
-	//rsp.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS,PUT"
 	return rsp, err
 }
 
 func main() {
-	lambda.Start(Handler)
+	isRunningAtLambda := strings.Contains(os.Getenv("AWS_EXECUTION_ENV"), "AWS_Lambda_")
 
+	if isRunningAtLambda {
+		lambda.Start(lambdaHandler)
+	} else {
+		defaultPort := "7010"
+		port := os.Getenv("PORT")
+
+		if port == "" {
+			port = defaultPort
+		}
+
+		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+		log.Fatal(http.ListenAndServe(":"+port, muxRouter))
+	}
 }
