@@ -4,6 +4,7 @@ provider:
   name: aws
   runtime: go1.x
   region: eu-west-3
+  stage: prod
   lambdaHashingVersion: 20201221
 
 package:
