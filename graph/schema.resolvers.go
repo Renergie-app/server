@@ -31,7 +31,8 @@ func (r *queryResolver) SolarPanel(ctx context.Context, input *model.SolarPanelI
 	for _, facade := range input.Facades {
 		amountOfSolarPanels := int(math.Floor(*facade.Surface / 1.7))
 		kwc := float64(amountOfSolarPanels) * 0.3
-		kwh := kwcToKwh(postalCodeToDepartment(input.PostalCode), kwc) * PercentageWithOrientationAndAngle(*facade.Orientation, *facade.Angle)
+		kwh := kwcToKwh(postalCodeToDepartment(input.PostalCode), kwc) * PercentageWithOrientationAndAngle(*facade.Orientation, *facade.Angle) / 100
+
 		totalAmountOfSolarPanels += amountOfSolarPanels
 		totalKWH += kwh
 		totalKWC += kwc
@@ -252,6 +253,107 @@ func kwcToKwh(department string, kwc float64) float64 {
 	i := m[department]
 	return float64(i) * kwc
 
+}
+
+func windSpeed(department string) float64 {
+	m := map[string]int{
+		"01": 15,
+		"02": 21,
+		"03": 15,
+		"04": 21,
+		"05": 18,
+		"06": 18,
+		"07": 18,
+		"08": 21,
+		"09": 15,
+		"10": 18,
+		"11": 25,
+		"12": 25,
+		"13": 30,
+		"14": 25,
+		"15": 15,
+		"16": 18,
+		"17": 21,
+		"18": 18,
+		"19": 18,
+		"20": 18,
+		"21": 15,
+		"22": 25,
+		"23": 18,
+		"24": 18,
+		"25": 15,
+		"26": 18,
+		"27": 25,
+		"28": 21,
+		"29": 25,
+		"30": 25,
+		"31": 15,
+		"32": 15,
+		"33": 18,
+		"34": 30,
+		"35": 25,
+		"36": 18,
+		"37": 18,
+		"38": 18,
+		"39": 15,
+		"40": 15,
+		"41": 18,
+		"42": 15,
+		"43": 15,
+		"44": 25,
+		"45": 18,
+		"46": 18,
+		"47": 15,
+		"48": 25,
+		"49": 21,
+		"50": 25,
+		"51": 25,
+		"52": 15,
+		"53": 21,
+		"54": 15,
+		"55": 18,
+		"56": 25,
+		"57": 18,
+		"58": 15,
+		"59": 21,
+		"60": 21,
+		"61": 18,
+		"62": 25,
+		"63": 15,
+		"64": 15,
+		"65": 15,
+		"66": 18,
+		"67": 15,
+		"68": 15,
+		"69": 15,
+		"70": 15,
+		"71": 15,
+		"72": 21,
+		"73": 15,
+		"74": 15,
+		"75": 21,
+		"76": 25,
+		"77": 18,
+		"78": 21,
+		"79": 21,
+		"80": 25,
+		"81": 25,
+		"82": 18,
+		"83": 25,
+		"84": 25,
+		"85": 25,
+		"86": 18,
+		"87": 18,
+		"88": 15,
+		"89": 18,
+		"90": 15,
+		"91": 18,
+		"92": 21,
+		"93": 21,
+		"94": 21,
+		"95": 21,
+	}
+	return float64(m[department]) / 3.6
 }
 func postalCodeToDepartment(postalCode string) string {
 	if len(postalCode) == 5 {
