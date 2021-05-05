@@ -51,7 +51,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		SolarPanel func(childComplexity int, input *model.SolarPanelInput) int
+		SolarPanel  func(childComplexity int, input *model.SolarPanelInput) int
+		WindTurbine func(childComplexity int, input *model.WindTurbineInput) int
 	}
 
 	SolarPanelResponse struct {
@@ -62,10 +63,17 @@ type ComplexityRoot struct {
 		TotalPowerOutputKwh      func(childComplexity int) int
 		TotalProfit              func(childComplexity int) int
 	}
+
+	WindTurbineResponse struct {
+		Cost           func(childComplexity int) int
+		PowerOutputKwh func(childComplexity int) int
+		Profit         func(childComplexity int) int
+	}
 }
 
 type QueryResolver interface {
 	SolarPanel(ctx context.Context, input *model.SolarPanelInput) (*model.SolarPanelResponse, error)
+	WindTurbine(ctx context.Context, input *model.WindTurbineInput) (*model.WindTurbineResponse, error)
 }
 
 type executableSchema struct {
@@ -137,6 +145,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SolarPanel(childComplexity, args["input"].(*model.SolarPanelInput)), true
 
+	case "Query.windTurbine":
+		if e.complexity.Query.WindTurbine == nil {
+			break
+		}
+
+		args, err := ec.field_Query_windTurbine_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.WindTurbine(childComplexity, args["input"].(*model.WindTurbineInput)), true
+
 	case "SolarPanelResponse.perFacadeDetails":
 		if e.complexity.SolarPanelResponse.PerFacadeDetails == nil {
 			break
@@ -178,6 +198,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SolarPanelResponse.TotalProfit(childComplexity), true
+
+	case "WindTurbineResponse.cost":
+		if e.complexity.WindTurbineResponse.Cost == nil {
+			break
+		}
+
+		return e.complexity.WindTurbineResponse.Cost(childComplexity), true
+
+	case "WindTurbineResponse.powerOutputKWH":
+		if e.complexity.WindTurbineResponse.PowerOutputKwh == nil {
+			break
+		}
+
+		return e.complexity.WindTurbineResponse.PowerOutputKwh(childComplexity), true
+
+	case "WindTurbineResponse.profit":
+		if e.complexity.WindTurbineResponse.Profit == nil {
+			break
+		}
+
+		return e.complexity.WindTurbineResponse.Profit(childComplexity), true
 
 	}
 	return 0, false
@@ -241,7 +282,22 @@ input Facade {
 
 type Query {
     solarPanel(input: SolarPanelInput): SolarPanelResponse
+    windTurbine(input: WindTurbineInput): WindTurbineResponse
 }
+
+input WindTurbineInput {
+    amount: Int!
+    type: WindTurbineType!
+    postalCode: String!
+}
+
+type WindTurbineResponse {
+    cost: Int!
+    powerOutputKWH: Float!
+    profit: Float!
+}
+
+
 input SolarPanelInput {
     postalCode: String!
     sellEverything: Boolean!
@@ -273,6 +329,11 @@ enum Orientation {
     SouthWest
     WEST
     NONE
+}
+
+enum WindTurbineType {
+    VERTICAL
+    HORIZONTAL
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -303,6 +364,21 @@ func (ec *executionContext) field_Query_solarPanel_args(ctx context.Context, raw
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalOSolarPanelInput2ᚖrenergieᚑserverᚋgraphᚋmodelᚐSolarPanelInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_windTurbine_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.WindTurbineInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOWindTurbineInput2ᚖrenergieᚑserverᚋgraphᚋmodelᚐWindTurbineInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -592,6 +668,45 @@ func (ec *executionContext) _Query_solarPanel(ctx context.Context, field graphql
 	return ec.marshalOSolarPanelResponse2ᚖrenergieᚑserverᚋgraphᚋmodelᚐSolarPanelResponse(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_windTurbine(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_windTurbine_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().WindTurbine(rctx, args["input"].(*model.WindTurbineInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.WindTurbineResponse)
+	fc.Result = res
+	return ec.marshalOWindTurbineResponse2ᚖrenergieᚑserverᚋgraphᚋmodelᚐWindTurbineResponse(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -871,6 +986,111 @@ func (ec *executionContext) _SolarPanelResponse_perFacadeDetails(ctx context.Con
 	res := resTmp.([]*model.FacadeResponse)
 	fc.Result = res
 	return ec.marshalNFacadeResponse2ᚕᚖrenergieᚑserverᚋgraphᚋmodelᚐFacadeResponseᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WindTurbineResponse_cost(ctx context.Context, field graphql.CollectedField, obj *model.WindTurbineResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WindTurbineResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WindTurbineResponse_powerOutputKWH(ctx context.Context, field graphql.CollectedField, obj *model.WindTurbineResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WindTurbineResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PowerOutputKwh, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WindTurbineResponse_profit(ctx context.Context, field graphql.CollectedField, obj *model.WindTurbineResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WindTurbineResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Profit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2040,6 +2260,42 @@ func (ec *executionContext) unmarshalInputSolarPanelInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputWindTurbineInput(ctx context.Context, obj interface{}) (model.WindTurbineInput, error) {
+	var it model.WindTurbineInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "amount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
+			it.Amount, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNWindTurbineType2renergieᚑserverᚋgraphᚋmodelᚐWindTurbineType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "postalCode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postalCode"))
+			it.PostalCode, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -2120,6 +2376,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_solarPanel(ctx, field)
 				return res
 			})
+		case "windTurbine":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_windTurbine(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -2173,6 +2440,43 @@ func (ec *executionContext) _SolarPanelResponse(ctx context.Context, sel ast.Sel
 			}
 		case "perFacadeDetails":
 			out.Values[i] = ec._SolarPanelResponse_perFacadeDetails(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var windTurbineResponseImplementors = []string{"WindTurbineResponse"}
+
+func (ec *executionContext) _WindTurbineResponse(ctx context.Context, sel ast.SelectionSet, obj *model.WindTurbineResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, windTurbineResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WindTurbineResponse")
+		case "cost":
+			out.Values[i] = ec._WindTurbineResponse_cost(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "powerOutputKWH":
+			out.Values[i] = ec._WindTurbineResponse_powerOutputKWH(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "profit":
+			out.Values[i] = ec._WindTurbineResponse_profit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2565,6 +2869,16 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNWindTurbineType2renergieᚑserverᚋgraphᚋmodelᚐWindTurbineType(ctx context.Context, v interface{}) (model.WindTurbineType, error) {
+	var res model.WindTurbineType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNWindTurbineType2renergieᚑserverᚋgraphᚋmodelᚐWindTurbineType(ctx context.Context, sel ast.SelectionSet, v model.WindTurbineType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -2901,6 +3215,21 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
+}
+
+func (ec *executionContext) unmarshalOWindTurbineInput2ᚖrenergieᚑserverᚋgraphᚋmodelᚐWindTurbineInput(ctx context.Context, v interface{}) (*model.WindTurbineInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputWindTurbineInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOWindTurbineResponse2ᚖrenergieᚑserverᚋgraphᚋmodelᚐWindTurbineResponse(ctx context.Context, sel ast.SelectionSet, v *model.WindTurbineResponse) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._WindTurbineResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

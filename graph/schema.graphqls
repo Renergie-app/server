@@ -10,7 +10,22 @@ input Facade {
 
 type Query {
     solarPanel(input: SolarPanelInput): SolarPanelResponse
+    windTurbine(input: WindTurbineInput): WindTurbineResponse
 }
+
+input WindTurbineInput {
+    amount: Int!
+    type: WindTurbineType!
+    postalCode: String!
+}
+
+type WindTurbineResponse {
+    cost: Int!
+    powerOutputKWH: Float!
+    profit: Float!
+}
+
+
 input SolarPanelInput {
     postalCode: String!
     sellEverything: Boolean!
@@ -42,4 +57,9 @@ enum Orientation {
     SouthWest
     WEST
     NONE
+}
+
+enum WindTurbineType {
+    VERTICAL
+    HORIZONTAL
 }

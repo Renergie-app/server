@@ -10,13 +10,6 @@ import (
 	"renergie-server/graph/model"
 )
 
-type FacadeCalc struct {
-	FacadeInput         *model.Facade
-	KWC                 float64
-	KWH                 float64
-	AmountOfSolarPanels int
-}
-
 func (r *queryResolver) SolarPanel(ctx context.Context, input *model.SolarPanelInput) (*model.SolarPanelResponse, error) {
 	var facadesResult []*model.FacadeResponse
 	var facades []FacadeCalc
@@ -141,6 +134,27 @@ func (r *queryResolver) SolarPanel(ctx context.Context, input *model.SolarPanelI
 	}, nil
 }
 
+func (r *queryResolver) WindTurbine(ctx context.Context, input *model.WindTurbineInput) (*model.WindTurbineResponse, error) {
+
+	var windDataSpeed float64 = windSpeed(postalCodeToDepartment(input.PostalCode))
+
+	kwh := 1000*windDataSpeed - 10000
+	if input.Type == model.WindTurbineTypeVertical {
+		kwh *= 2
+	}
+	var cost int
+	if input.Type == model.WindTurbineTypeHorizontal {
+		cost = 15850 * input.Amount
+	} else {
+		cost = 18950 * input.Amount
+	}
+	return &model.WindTurbineResponse{
+		Cost:           cost,
+		PowerOutputKwh: kwh * float64(input.Amount),
+		Profit:         0.082 * kwh * float64(input.Amount),
+	}, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
@@ -152,6 +166,13 @@ type queryResolver struct{ *Resolver }
 //  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
+type FacadeCalc struct {
+	FacadeInput         *model.Facade
+	KWC                 float64
+	KWH                 float64
+	AmountOfSolarPanels int
+}
+
 func kwcToKwh(department string, kwc float64) float64 {
 	m := map[string]int{
 		"01": 1050,
@@ -254,7 +275,6 @@ func kwcToKwh(department string, kwc float64) float64 {
 	return float64(i) * kwc
 
 }
-
 func windSpeed(department string) float64 {
 	m := map[string]int{
 		"01": 15,
@@ -353,7 +373,7 @@ func windSpeed(department string) float64 {
 		"94": 21,
 		"95": 21,
 	}
-	return float64(m[department]) / 3.6
+	return float64(m[department])
 }
 func postalCodeToDepartment(postalCode string) string {
 	if len(postalCode) == 5 {
@@ -415,5 +435,4 @@ func getPercentage(alpha int, beta int, a int, b int, x int) float64 {
 	} else {
 		return float64(a) + ((float64(x%30))*float64(b-a))/float64(beta-alpha)
 	}
-
 }

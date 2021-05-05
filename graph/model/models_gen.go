@@ -39,6 +39,18 @@ type SolarPanelResponse struct {
 	PerFacadeDetails         []*FacadeResponse `json:"perFacadeDetails"`
 }
 
+type WindTurbineInput struct {
+	Amount     int             `json:"amount"`
+	Type       WindTurbineType `json:"type"`
+	PostalCode string          `json:"postalCode"`
+}
+
+type WindTurbineResponse struct {
+	Cost           int     `json:"cost"`
+	PowerOutputKwh float64 `json:"powerOutputKWH"`
+	Profit         float64 `json:"profit"`
+}
+
 type Orientation string
 
 const (
@@ -85,5 +97,46 @@ func (e *Orientation) UnmarshalGQL(v interface{}) error {
 }
 
 func (e Orientation) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type WindTurbineType string
+
+const (
+	WindTurbineTypeVertical   WindTurbineType = "VERTICAL"
+	WindTurbineTypeHorizontal WindTurbineType = "HORIZONTAL"
+)
+
+var AllWindTurbineType = []WindTurbineType{
+	WindTurbineTypeVertical,
+	WindTurbineTypeHorizontal,
+}
+
+func (e WindTurbineType) IsValid() bool {
+	switch e {
+	case WindTurbineTypeVertical, WindTurbineTypeHorizontal:
+		return true
+	}
+	return false
+}
+
+func (e WindTurbineType) String() string {
+	return string(e)
+}
+
+func (e *WindTurbineType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = WindTurbineType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WindTurbineType", str)
+	}
+	return nil
+}
+
+func (e WindTurbineType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
