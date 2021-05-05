@@ -136,11 +136,11 @@ func (r *queryResolver) SolarPanel(ctx context.Context, input *model.SolarPanelI
 
 func (r *queryResolver) WindTurbine(ctx context.Context, input *model.WindTurbineInput) (*model.WindTurbineResponse, error) {
 
-	var windDataSpeed float64 = windSpeed(postalCodeToDepartment(input.PostalCode))
+	windDataSpeed := windSpeed(postalCodeToDepartment(input.PostalCode))
 
 	kwh := 1000*windDataSpeed - 10000
 	if input.Type == model.WindTurbineTypeVertical {
-		kwh *= 2
+		kwh *= 0.78
 	}
 	var cost int
 	if input.Type == model.WindTurbineTypeHorizontal {
