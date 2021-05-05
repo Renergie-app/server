@@ -77,7 +77,7 @@ func (r *queryResolver) SolarPanel(ctx context.Context, input *model.SolarPanelI
 		//	COST
 		if totalKWC <= 3 {
 			if input.IntegratedInBuilding {
-				cost += 255 * facade.KWC
+				cost += 2550 * facade.KWC
 			} else {
 				cost += 2850 * facade.KWC
 			}
